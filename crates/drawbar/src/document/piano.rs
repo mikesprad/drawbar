@@ -5391,6 +5391,7 @@ mod tests {
                         })
                         .collect()],
                     sustain: None,
+                    under_attack: None,
                 })
             })
             .collect();
