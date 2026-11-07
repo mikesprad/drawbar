@@ -38,3 +38,4 @@ nord-usb = { path = "../nord-usb", version = "0.8.0", features = [
   "blocking",
   "replay",
 ] }
+npno-prep = { path = "../npno-prep", version = "0.1.0" }
