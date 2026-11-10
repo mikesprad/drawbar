@@ -1428,6 +1428,7 @@ impl DrawbarApp {
                     &self.workspace,
                     &self.device,
                     &self.queue,
+                    |ui| self.document.take_cards(ui, &mut self.log),
                 ));
                 round_off(ui, rect);
             });

@@ -65,7 +65,8 @@ const BODY: egui::Margin = egui::Margin {
     bottom: 12,
 };
 
-/// The selection's cards, then the instrument's while one is attached.
+/// The open document's own cards, which `document` draws, then the selection's, then
+/// the instrument's while one is attached.
 pub fn ui(
     ui: &mut egui::Ui,
     shell: &mut Shell,
@@ -73,6 +74,7 @@ pub fn ui(
     workspace: &Workspace,
     device: &Device,
     queue: &Queue,
+    document: impl FnOnce(&mut egui::Ui),
 ) -> Vec<Act> {
     let mut acts = Vec::new();
     egui::ScrollArea::vertical()
@@ -81,6 +83,7 @@ pub fn ui(
         .show(ui, |ui| {
             egui::Frame::new().inner_margin(GUTTER).show(ui, |ui| {
                 ui.spacing_mut().item_spacing.y = GUTTER;
+                document(ui);
                 let picked = &mut shell.picked;
                 selection(ui, picked, browser, workspace, device, queue, &mut acts);
                 if !device.state.connected() {
@@ -100,7 +103,7 @@ pub fn ui(
 }
 
 /// What a card's header shows.
-struct Head<'a> {
+pub(crate) struct Head<'a> {
     glyph: Glyph,
     title: &'a str,
     /// A short word at the right end, in its own color.
@@ -111,7 +114,7 @@ struct Head<'a> {
 
 impl<'a> Head<'a> {
     /// The header of a card that is always open and has no badge.
-    fn fixed(glyph: Glyph, title: &'a str) -> Head<'a> {
+    pub(crate) fn fixed(glyph: Glyph, title: &'a str) -> Head<'a> {
         Head {
             glyph,
             title,
@@ -122,7 +125,7 @@ impl<'a> Head<'a> {
 }
 
 /// A card inside the dock: a header, and under it the body while the card is open.
-fn card(ui: &mut egui::Ui, head: Head, body: impl FnOnce(&mut egui::Ui)) {
+pub(crate) fn card(ui: &mut egui::Ui, head: Head, body: impl FnOnce(&mut egui::Ui)) {
     egui::Frame::new()
         .fill(ui.visuals().window_fill)
         .corner_radius(INNER_RADIUS)
@@ -921,7 +924,15 @@ mod tests {
                 egui::SidePanel::right("inspector")
                     .exact_width(crate::shell::INSPECTOR)
                     .show(ctx, |panel| {
-                        super::ui(panel, shell, &mut browser, &workspace, device, &queue);
+                        super::ui(
+                            panel,
+                            shell,
+                            &mut browser,
+                            &workspace,
+                            device,
+                            &queue,
+                            |_| {},
+                        );
                         if let Some((slot, deps)) = answered(&browser, device) {
                             dependencies(panel, slot, deps);
                         }
@@ -1182,7 +1193,7 @@ mod tests {
                         queue,
                         ..
                     } = bench;
-                    super::ui(panel, shell, browser, workspace, device, queue);
+                    super::ui(panel, shell, browser, workspace, device, queue, |_| {});
                 });
         });
         testing::words(&output)
@@ -1370,6 +1381,7 @@ mod tests {
                                 &workspace,
                                 &device,
                                 &queue,
+                                |_| {},
                             ));
                         });
                 });
@@ -1435,7 +1447,7 @@ mod tests {
                 egui::SidePanel::right("inspector")
                     .exact_width(crate::shell::INSPECTOR)
                     .show(ctx, |panel| {
-                        super::ui(panel, shell, browser, &workspace, &device, &queue);
+                        super::ui(panel, shell, browser, &workspace, &device, &queue, |_| {});
                     });
             });
             testing::painted(&output)
