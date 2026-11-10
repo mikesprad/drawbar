@@ -1412,6 +1412,9 @@ impl DrawbarApp {
         if wants.build {
             acts.push(browser::Act::Build(id));
         }
+        if wants.revert {
+            acts.push(browser::Act::AskRevert(id));
+        }
         if let Some(item) = wants.open {
             acts.push(browser::Act::Open(item));
         }
